@@ -11,13 +11,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/passwordInput";
 import { SignupValidation } from "../../lib/validation";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
-import { createUserAccount } from "@/lib/api";
 import { z } from "zod";
+import { useCreateUserAccount } from "@/lib/react-query/queriesAndMutations";
+import { useToast } from "@/components/ui/use-toast";
+import Loader from "@/components/shared/Loader";
 
 const SignupForm = () => {
- 
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const { mutateAsync: createUserAccount, isLoading: isCreatingAccount } =
+    useCreateUserAccount();
+
   const form = useForm({
     resolver: zodResolver(SignupValidation),
     defaultValues: {
@@ -29,15 +36,28 @@ const SignupForm = () => {
     },
   });
 
-  const handleSignin = async (user:z.infer<typeof SignupValidation>) => {
-    console.log(user, "user");
-    createUserAccount(user);
+  const handleSignup = async (user: z.infer<typeof SignupValidation>) => {
+    try {
+      const newUser = await createUserAccount(user);
+
+      if (!newUser) {
+        toast({ title: "Sign up failed. Please try again." });
+
+        return;
+      } else {
+        toast({ title: "Sign up succseed" });
+
+        navigate("/");
+      }
+    } catch (error) {
+      console.log({ error });
+    }
   };
   return (
     <div className="xs:mx-auto w-full h-full p-4  xs:w-[360px] px-4 xs:px-0  ">
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleSignin)}
+          onSubmit={form.handleSubmit(handleSignup)}
           className="flex flex-col gap-4 justify-between  ">
           <div className="flex flex-col gap-4">
             <h1 className="h1-bold mb-4 ">
@@ -102,9 +122,9 @@ const SignupForm = () => {
                   <FormItem>
                     <FormControl>
                       <PasswordInput
-                       ref={field.ref}
-                       value={field.value}
-                       onChange={field.onChange}
+                        ref={field.ref}
+                        value={field.value}
+                        onChange={field.onChange}
                         className="auth-input"
                         placeholder="Enter your password"
                       />
@@ -134,7 +154,7 @@ const SignupForm = () => {
                 </div>
               )}
             />
-          
+
             <div className="flex flex-row-reverse items-center justify-between space-x-2">
               <Switch id="airplane-mode" />
               <p className="small-primary">Agree to Terms and Conditions</p>
@@ -142,7 +162,14 @@ const SignupForm = () => {
           </div>
           <div className="flex flex-col gap-4">
             <Button type="submit" className="sign-in-button">
-              Sign up
+              {isCreatingAccount ? (
+                <div className="flex-center gap-2">
+                  <Loader/>
+                  is Loading ...{" "}
+                </div>
+              ) : (
+                "Sign up"
+              )}
             </Button>
 
             <div className="flex items-center  ">
@@ -190,104 +217,4 @@ const SignupForm = () => {
 
 export default SignupForm;
 
-// export default function SignupForm() {
-//   // const navigate = useNavigate();
-//   // const { toast } = useToast();
-//   // const { checkAuthUser, isLoading: isUserLoading } = useUserContext();
 
-//   // const { mutateAsync: signInAccount } = useSignInAccount();
-//   const form = useForm<z.infer<typeof SignupValidation>>({
-//     resolver: zodResolver(SignupValidation),
-//     defaultValues: {
-//       email: "",
-//       password: "",
-//     },
-//   });
-
-//   // const handleSignin = async (user: z.infer<typeof SignupValidation>) => {
-//   //   try {
-//   //     const session = await signInAccount({
-//   //       email: user.email,
-//   //       password: user.password,
-//   //     });
-//   //     console.log(session, "session");
-
-//   //     if (!session) {
-//   //       toast({ title: "Something went wrong. Please login your new account" });
-
-//   //       navigate("/sign-in");
-
-//   //       return;
-//   //     }
-
-//   //     const isLoggedIn = await checkAuthUser();
-
-//   //     if (isLoggedIn) {
-//   //       form.reset();
-
-//   //       navigate("/");
-//   //     } else {
-//   //       toast({ title: "Login failed. Please try again." });
-
-//   //       return;
-//   //     }
-//   //   } catch (error) {
-//   //     console.log({ error });
-//   //   }
-//   // };
-
-//   return (
-//   <div className="w-full">
-//       <Form {...form} >
-//           <form
-//             onSubmit={form.handleSubmit(handleSignin)}
-//             className="">
-//             <FormField
-//               control={form.control}
-//               name="email"
-//               render={({ field }) => (
-//                 <FormItem>
-//                   <FormLabel>ایمیل</FormLabel>
-//                   <FormControl>
-//                     <Input type="email" {...field} className="shad-input" />
-//                   </FormControl>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//             <FormField
-//               control={form.control}
-//               name="password"
-//               render={({ field }) => (
-//                 <FormItem>
-//                   <FormLabel>رمز عبور</FormLabel>
-//                   <FormControl>
-//                     <Input type="password" {...field} className="shad-input" />
-//                   </FormControl>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//             <Button type="submit" className="shad-button_primary">
-//               {isUserLoading ? (
-//                 <div className="flex-center gap-2">
-//                   <Loader />
-//                   در حال بارگذاری ...
-//                 </div>
-//               ) : (
-//                 "ورود"
-//               )}
-//             </Button>
-//             <p className="text-small-regular text-light-2 text-center mt-2">
-//               تاکنون ثبت نام داشته اید؟
-//               <Link
-//                 to="/sign-up"
-//                 className="text-primary-500 text-small-semibold mr-1">
-//                 ثبت نام
-//               </Link>
-//             </p>{" "}
-//           </form>
-//       </Form>
-//   </div>
-//   );
-// }

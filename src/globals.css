@@ -38,6 +38,9 @@
   .h3-bold {
     @apply text-[24px] font-bold leading-[140%] tracking-tighter;
   }
+  .h4-medium {
+    @apply text-[24px] font-normal leading-[140%] tracking-tighter;
+  }
   .h4-bold {
     @apply text-[18px] font-bold leading-[140%] tracking-tighter;
   }
@@ -79,6 +82,9 @@
 
   .subtle-semibold {
     @apply text-[12px] font-semibold leading-[140%];
+  }
+  .subtle-small {
+    @apply text-[12px] font-light leading-[140%] text-[#1E232C];
   }
 
   .tiny-medium {

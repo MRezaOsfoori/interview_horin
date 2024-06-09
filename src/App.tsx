@@ -5,6 +5,7 @@ import SignupForm from "./_auth/forms/SignupForm";
 import AuthLayout from "./_auth/AuthLayout";
 import { Toaster } from "@/components/ui/toaster";
 import AuthPage from "./pages/AuthPage";
+import Home from "./_root/Home";
 
 const App = () => {
   return (
@@ -16,6 +17,7 @@ const App = () => {
           <Route path="/sign-in" element={<SigninForm />} />
           <Route path="/sign-up" element={<SignupForm />} />
         </Route>
+        <Route path="/" element={<Home />} />
       </Routes>
 
       <Toaster />

@@ -1,26 +1,60 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import {Form,FormControl,FormField,FormItem,FormMessage,
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SigninValidation } from "../../lib/validation";
 import { Link, useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import { jwtDecode } from "jwt-decode";
 import { z } from "zod";
+import { useSignInAccount } from "@/lib/react-query/queriesAndMutations";
+import { useToast } from "@/components/ui/use-toast";
+import Loader from "@/components/shared/Loader";
+import { PasswordInput } from "@/components/ui/passwordInput";
+import { useUserContext } from "@/context/AuthContext";
 
 const SigninForm = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const {setUser,setAuthTokens}=useUserContext()
+
+  const { mutateAsync: createUserAccount, isLoading } = useSignInAccount();
   const form = useForm({
     resolver: zodResolver(SigninValidation),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
 
-  const handleSignin = async (user:z.infer<typeof SigninValidation>) => {
-    console.log({ user });
+  const handleSignin = async (user: z.infer<typeof SigninValidation>) => {
+    try {
+      const session = await createUserAccount(user);
+      console.log(jwtDecode(session.data.access), "session");
+
+      if (session.status == "200") {
+
+        setAuthTokens(session.data)
+        localStorage.setItem('authTokens', JSON.stringify(session.data))
+        setUser(jwtDecode(session.data.access))
+        toast({ title: "Sign in succseed" });
+
+        navigate("/");
+      } else {
+        toast({ title: session.response.data.detail });
+
+        return;
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
   return (
     <div className="xs:mx-auto w-full h-full p-4  xs:w-[360px] px-4 xs:px-0   ">
@@ -34,12 +68,12 @@ const SigninForm = () => {
             </h1>
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
-                      type="email"
+                      type="username"
                       {...field}
                       className="auth-input"
                       placeholder="Enter your email"
@@ -53,11 +87,12 @@ const SigninForm = () => {
               control={form.control}
               name="password"
               render={({ field }) => (
-                <div >
+                <div>
                   <FormItem>
                     <FormControl>
-                      <Input
+                      <PasswordInput
                         ref={field.ref}
+                        onChange={field.onChange}
                         value={field.value}
                         className="auth-input"
                         placeholder="Enter your password"
@@ -88,7 +123,14 @@ const SigninForm = () => {
               Choose different method
             </Link>
             <Button type="submit" className="sign-in-button">
-              Sign in
+              {isLoading ? (
+                <div className="flex-center gap-2">
+                  <Loader />
+                  is Loading ...{" "}
+                </div>
+              ) : (
+                "Sign in"
+              )}
             </Button>
 
             <div className="flex items-center  ">
@@ -135,4 +177,3 @@ const SigninForm = () => {
 };
 
 export default SigninForm;
-
